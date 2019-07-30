@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "name": "node-express-php-client",
+  "description": "Php Client for the ExpressJS",
+  "keywords": [
+    "php client",
+    "express",
+    "request php"
+  ],
+  "author": {
+    "name": "Lev Nazarenko",
+    "email": "lynazarenko@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:mightydes/node-express-php-client.git"
+  },
+  "homepage": "https://github.com/mightydes/node-express-php-client",
+  "bugs": {
+    "url": "https://github.com/mightydes/node-express-php-client/issues"
+  },
+  "license": "MIT",
+  "main": "src/index.js",
+  "dependencies": {
+    "debug": "^2.3",
+    "request": "^2.8"
+  },
+  "devDependencies": {}
+}
