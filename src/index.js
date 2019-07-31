@@ -92,10 +92,12 @@ class PhpClientContext {
         return axios(requestOpt)
             .then((response) => {
                 res.set(response.headers);
+                res.status(response.status);
                 return response.data.pipe(res);
             })
             .catch((rejection) => {
                 res.set(rejection.response.headers);
+                res.status(rejection.response.status);
                 return rejection.response.data.pipe(res)
             });
     }
