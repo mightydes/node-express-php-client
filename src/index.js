@@ -1,6 +1,7 @@
 const debug = require('debug')('node-express-php-client');
-const request = require('request');
-const BadStatusCodeError = require('./bad-status-code-error');
+const axios = require('axios');
+const Response = require('responselike');
+const PhpRejectionError = require('./php-rejection-error');
 
 class PhpClientContext {
 
@@ -19,15 +20,16 @@ class PhpClientContext {
      * @param {Object} options
      * @returns {Promise}
      */
-    callJson(url, payload = {}, options = {}) {
-        debug(`callJson ${this.locationKey}:`, url);
+    post(url, payload = {}, options = {}) {
+        debug(`post ${this.locationKey}:`, url);
         return new Promise((resolve, reject) => {
             const body = new Buffer(JSON.stringify(payload || {}));
             let requestOpt = {
                 url: this.locationOptions.location + url,
                 method: 'POST',
+                maxRedirects: 0,
                 headers: {},
-                body: body
+                data: body
             };
 
             if (options.headers) {
@@ -36,15 +38,13 @@ class PhpClientContext {
             requestOpt.headers['content-type'] = PhpClient.JSON_CONTENT_TYPE;
             requestOpt.headers['content-length'] = body.length;
 
-            return request(requestOpt, (err, response, body) => {
-                if (err) {
-                    return reject(err);
-                }
-                if (response.statusCode >= 400) {
-                    return reject(new BadStatusCodeError(response, body, requestOpt.url));
-                }
-                return resolve(response, body);
-            });
+            return axios(requestOpt)
+                .then((response) => resolve(
+                    new Response(response.status, response.headers, response.data, url)
+                ))
+                .catch((rejection) => reject(new PhpRejectionError(
+                    new Response(rejection.response.status, rejection.response.headers, rejection.response.data, url)
+                )));
         });
     }
 
@@ -59,6 +59,8 @@ class PhpClientContext {
         let requestOpt = {
             url: this.locationOptions.location + req.originalUrl,
             method: method,
+            maxRedirects: 0,
+            responseType: 'stream',
             headers: req.headers
         };
         debug(`pass ${this.locationKey}:`, requestOpt.url);
@@ -67,26 +69,59 @@ class PhpClientContext {
             return this.passJson(req, res, requestOpt);
         }
 
-        if (method === 'GET') {
-            return request(requestOpt).pipe(res);
+        if (!this.isBodyAvailable(method)) {
+            return this.__pass(req, res, requestOpt);
         }
 
-        // Other methods:
         if (req.is('multipart/form-data')) {
-            requestOpt.body = req.body;
-            return request(requestOpt).pipe(res);
+            requestOpt.data = req.body;
+            return this.__pass(req, res, requestOpt);
         }
 
         return this.passJson(req, res, requestOpt);
     }
 
+    /**
+     * @private
+     * @param {Object} req
+     * @param {Object} res
+     * @param {Object} requestOpt
+     * @returns {*}
+     */
+    __pass(req, res, requestOpt) {
+        return axios(requestOpt)
+            .then((response) => {
+                res.set(response.headers);
+                return response.data.pipe(res);
+            })
+            .catch((rejection) => {
+                res.set(rejection.response.headers);
+                return rejection.response.data.pipe(res)
+            });
+    }
+
+    /**
+     * @private
+     * @param {Object} req
+     * @param {Object} res
+     * @param {Object} requestOpt
+     * @returns {*}
+     */
     passJson(req, res, requestOpt) {
         const body = new Buffer(JSON.stringify(req.body || {}));
-        requestOpt.method = 'POST';
         requestOpt.headers['content-type'] = PhpClient.JSON_CONTENT_TYPE;
         requestOpt.headers['content-length'] = body.length;
-        requestOpt.body = body;
-        return request(requestOpt).pipe(res);
+        requestOpt.data = body;
+        return this.__pass(req, res, requestOpt);
+    }
+
+    /**
+     * @private
+     * @param method
+     * @returns {boolean}
+     */
+    isBodyAvailable(method) {
+        return ['POST', 'PUT', 'PATCH'].indexOf(method) > -1;
     }
 
 }

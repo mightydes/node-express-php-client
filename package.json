@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "node-express-php-client",
   "description": "Php Client for the ExpressJS",
   "keywords": [
@@ -22,8 +22,9 @@
   "license": "MIT",
   "main": "src/index.js",
   "dependencies": {
+    "axios": "^0.19",
     "debug": "^2.3",
-    "request": "^2.8"
+    "responselike": "^1.0"
   },
   "devDependencies": {}
 }
