@@ -111,6 +111,9 @@ class PhpClientContext {
      */
     passJson(req, res, requestOpt) {
         const body = new Buffer(JSON.stringify(req.body || {}));
+        if (!this.isBodyAvailable(requestOpt.method)) {
+            requestOpt.method = 'POST';
+        }
         requestOpt.headers['content-type'] = PhpClient.JSON_CONTENT_TYPE;
         requestOpt.headers['content-length'] = body.length;
         requestOpt.data = body;
