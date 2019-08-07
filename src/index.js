@@ -73,7 +73,7 @@ class PhpClientContext {
             return this.__pass(req, res, requestOpt);
         }
 
-        if (req.is('multipart/form-data')) {
+        if (req.is('multipart/form-data') || req.is('application/x-www-form-urlencoded')) {
             requestOpt.data = req.body;
             return this.__pass(req, res, requestOpt);
         }
