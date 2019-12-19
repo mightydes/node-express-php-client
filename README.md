@@ -1,4 +1,10 @@
-# node-express-php-client
+# ABANDONED
+
+Use [node-express-http-manager](https://github.com/mightydes/node-express-http-manager) instead!
+
+---
+
+## node-express-php-client
 
 Php Client for the ExpressJS
 
